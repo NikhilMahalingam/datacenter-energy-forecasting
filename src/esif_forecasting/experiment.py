@@ -49,7 +49,7 @@ def evaluate(hourly: pd.DataFrame, config: dict):
             detail = {
                 "horizon_hours": horizon, "fold": fold.name,
                 "test_window_start": str(fold.start), "test_window_end": str(fold.end),
-                "grid_origins": len(frame.index.union(observations.index)),
+                "grid_origins": len(observations),
                 "eligible_origins": len(frame), "train_rows": len(train), "test_rows": len(test),
             }
             records.append(detail)
@@ -127,7 +127,11 @@ def run(config_path: Path, power_path: Path | None, weather_path: Path | None) -
     summary = metrics(predictions, evaluation, config)
     predictions.to_csv(results / "test_predictions.csv", index=False)
     summary.to_csv(results / "metrics.csv", index=False)
+    from .plots import make_figures
+
+    periods = make_figures(hourly, predictions, summary, results / "figures")
     metadata = {
+        "figure_intervals": periods,
         **evaluation, "config": config, "source": CATALOG, "license": LICENSE,
         "audit": audit, "target_fields_kw": TARGETS[config["target"]],
         "python": python_version(), "versions": {name: version(name) for name in
