@@ -1,0 +1,12 @@
+data_dir: data/raw
+processed_dir: data/processed
+results_dir: results
+target: cooling_meter
+minimum_hour_fraction: 0.75
+horizon_hours: [1, 24]
+initial_months: 4
+year_completeness: 0.95
+gap_hours: 24
+seed: 42
+ridge_alpha: [1.0, 10.0]
+boosting_leaves: [7, 15]

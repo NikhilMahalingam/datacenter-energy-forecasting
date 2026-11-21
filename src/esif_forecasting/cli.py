@@ -26,10 +26,18 @@ def main() -> None:
         "--audit", type=Path, default=Path("data/processed/audit.json"))
     commands.choices["baseline"].add_argument(
         "--output", type=Path, default=Path("results/baseline_predictions.csv"))
+    experiment = commands.add_parser("run")
+    experiment.add_argument("--config", type=Path, default=Path("configs/default.yaml"))
+    experiment.add_argument("--power", type=Path)
+    experiment.add_argument("--weather", type=Path)
     args = parser.parse_args()
     try:
         if args.command == "download":
             download(args.data_dir)
+        elif args.command == "run":
+            from .experiment import run
+
+            run(args.config, args.power, args.weather)
         else:
             power = input_path(args.data_dir, "power", args.power)
             weather = input_path(args.data_dir, "weather", args.weather)

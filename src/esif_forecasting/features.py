@@ -40,7 +40,7 @@ def historical_features(hourly: pd.DataFrame) -> dict[str, pd.DataFrame]:
                 features[f"{signal}_mean{window}"] = values.rolling(window).mean()
         groups[name] = pd.DataFrame(features, index=hourly.index)
     for label, values, period in (("hour", hourly.index.hour, 24),
-                                  ("weekday", hourly.index.dayofweek, 7)):
+                                  ("weekday", hourly.index.day_of_week, 7)):
         phase = 2 * np.pi * values / period
         groups["power"][f"{label}_sin"] = np.sin(phase)
         groups["power"][f"{label}_cos"] = np.cos(phase)
