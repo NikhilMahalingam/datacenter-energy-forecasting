@@ -16,12 +16,16 @@ def main() -> None:
     commands = parser.add_subparsers(dest="command", required=True)
     fetch = commands.add_parser("download")
     fetch.add_argument("--data-dir", type=Path, default=Path("data/raw"))
-    inspect = commands.add_parser("inspect")
-    inspect.add_argument("--data-dir", type=Path, default=Path("data/raw"))
-    inspect.add_argument("--power", type=Path)
-    inspect.add_argument("--weather", type=Path)
-    inspect.add_argument("--target", choices=TARGETS, default="cooling_meter")
-    inspect.add_argument("--audit", type=Path, default=Path("data/processed/audit.json"))
+    for command in ("inspect", "baseline"):
+        subparser = commands.add_parser(command)
+        subparser.add_argument("--data-dir", type=Path, default=Path("data/raw"))
+        subparser.add_argument("--power", type=Path)
+        subparser.add_argument("--weather", type=Path)
+        subparser.add_argument("--target", choices=TARGETS, default="cooling_meter")
+    commands.choices["inspect"].add_argument(
+        "--audit", type=Path, default=Path("data/processed/audit.json"))
+    commands.choices["baseline"].add_argument(
+        "--output", type=Path, default=Path("results/baseline_predictions.csv"))
     args = parser.parse_args()
     try:
         if args.command == "download":
@@ -29,9 +33,18 @@ def main() -> None:
         else:
             power = input_path(args.data_dir, "power", args.power)
             weather = input_path(args.data_dir, "weather", args.weather)
-            _, report = prepare(power, weather, args.target, 0.75)
-            write_json(args.audit, report)
-            print(args.audit)
+            hourly, report = prepare(power, weather, args.target, 0.75)
+            if args.command == "inspect":
+                write_json(args.audit, report)
+                print(args.audit)
+            else:
+                from .evaluation import baseline_predictions, evaluation_folds
+
+                scheme, folds = evaluation_folds(hourly, 4, 0.95)
+                predictions = baseline_predictions(hourly, folds)
+                args.output.parent.mkdir(parents=True, exist_ok=True)
+                predictions.to_csv(args.output, index=False)
+                print(f"{scheme}: {args.output}")
     except (OSError, ValueError) as error:
         parser.exit(1, f"{error}\n")
 
