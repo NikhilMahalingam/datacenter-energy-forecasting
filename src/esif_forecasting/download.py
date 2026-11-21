@@ -1,8 +1,8 @@
 import json
 from datetime import datetime, timezone
+from http.client import HTTPException
 from pathlib import Path
 from time import sleep
-from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 CATALOG = "https://data.openei.org/submissions/8616"
@@ -50,7 +50,7 @@ def download_file(kind: str, directory: Path) -> None:
             for attempt in range(2):
                 try:
                     retrieve(url, directory / name)
-                except (OSError, URLError, ValueError) as error:
+                except (OSError, HTTPException, ValueError) as error:
                     print(f"{url} (attempt {attempt + 1}): {error}", flush=True)
                     if attempt == 0:
                         sleep(1)

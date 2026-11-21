@@ -12,6 +12,11 @@ WEATHER = ["outside_air_temp", "outside_air_humidity"]
 TARGETS = {"mechanical": POWER[1:], "cooling_meter": ["cooling_kw"]}
 
 
+def write_json(path: Path, value: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(value, indent=2, allow_nan=False) + "\n", encoding="utf-8")
+
+
 def input_path(directory: Path, kind: str, explicit: Path | None) -> Path:
     if explicit is not None:
         return explicit
@@ -115,8 +120,7 @@ def hourly(frame: pd.DataFrame, minimum_fraction: float) -> pd.DataFrame:
 def pue_accounting(power: pd.DataFrame) -> dict:
     if not {"pue", "plug_and_light_kw"}.issubset(power):
         return {"status": "PUE or plug-and-light field absent"}
-    data = power[[*POWER, "pue", "plug_and_light_kw"]].replace(
-        [np.inf, -np.inf], np.nan).dropna()
+    data = clean(power, [*POWER, "pue", "plug_and_light_kw"]).dropna()
     data = data.loc[data["it_power_kw"] > 0]
     if data.empty:
         return {"status": "No complete rows with positive IT power"}
@@ -143,6 +147,8 @@ def prepare(power_path: Path, weather_path: Path, target: str,
         validated = validate(raw, columns)
         reports[kind] = audit(raw, validated, path)
         if kind == "power":
+            advertised = {"plug_and_light_kw", "pue", "energy_reuse"}
+            reports[kind]["absent_catalog_fields"] = sorted(advertised - set(raw.columns))
             reports["pue_accounting"] = pue_accounting(validated)
         tables[kind] = clean(validated, columns)
     power, weather = tables["power"], tables["weather"]

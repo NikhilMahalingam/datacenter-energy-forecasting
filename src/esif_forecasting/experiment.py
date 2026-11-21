@@ -8,7 +8,7 @@ import pandas as pd
 import yaml
 from threadpoolctl import threadpool_limits
 
-from .data import TARGETS, input_path, prepare
+from .data import TARGETS, input_path, prepare, write_json
 from .download import CATALOG, LICENSE
 from .evaluation import evaluation_folds, scores, split
 from .features import BASELINES, HORIZONS, forecast_table, historical_features
@@ -108,8 +108,6 @@ def metrics(predictions: pd.DataFrame, evaluation: dict, config: dict) -> pd.Dat
 
 
 def run(config_path: Path, power_path: Path | None, weather_path: Path | None) -> None:
-    from .cli import write_json
-
     started = perf_counter()
     config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
     configurations(config)
